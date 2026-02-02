@@ -234,61 +234,40 @@ function updateBodyShape() {
         const name = bone.name.toLowerCase();
 
         // Height (Global Scale on Hips or Root)
-        if (name === 'hips' || name === 'mixamorig_hips' || name === 'mixamorighips') {
+        if (name.includes('hips') || name.includes('root')) {
             let baseHeight = 170;
             if (state.gender === 'male') baseHeight = 180;
             if (state.gender === 'female') baseHeight = 165;
             
             const heightScale = vals.height / baseHeight; 
-            // Only apply uniform scale to the whole model container, not just hips bone
-            // because scaling hips bone affects all children bones recursively but positionally
-            // Better to scale the whole model group for height
             state.avatarModel.scale.setScalar(heightScale);
         }
 
         // Weight / Build (Torso width/depth)
         // Affects Spine, Spine1, Spine2
-        if (name.includes('spine') || name.includes('mixamorigspine')) {
+        if (name.includes('spine')) {
              let weightMod = 1.0;
-             // Scale X (width) and Z (depth)
-             // We use vals.weight which is a multiplier around 1.0 (e.g. 0.5 to 1.5)
-             
-             // Base adjustment
              if (state.gender === 'male') weightMod = 1.0; 
              if (state.gender === 'female') weightMod = 0.9; 
-             
-             // Apply scale
-             // Note: Bone scaling propagates to children. 
-             // We might need to inverse scale children if we don't want arms to get huge
-             // But for "Build" usually getting bigger everywhere is desired.
              
              bone.scale.x = vals.weight * weightMod; 
              bone.scale.z = vals.weight * weightMod;
         }
         
         // Waist (Spine / Hips specific) - usually Spine or Spine1
-        // To make waist smaller without affecting chest too much, we might need specific bone
-        if (name === 'mixamorigspine' || name === 'spine') { 
-            // This is the lower back.
-            bone.scale.x = vals.waist * vals.weight; // Waist is relative to weight
+        if (name === 'mixamorigspine' || name === 'spine' || name === 'spine1') { 
+            bone.scale.x = vals.waist * vals.weight; 
             bone.scale.z = vals.waist * vals.weight;
         }
 
         // Arms / Shoulders
         if (name.includes('arm') || name.includes('shoulder') || name.includes('forearm')) {
-            // vals.arms controls thickness (X/Z local scale of arm bones)
-            // Length is Y usually in Mixamo, but X in some rigs. Mixamo usually Y-up for bones.
-            // Actually Mixamo bones point in Y? Let's assume standard T-pose.
-            
-            // For thickness we want to scale the cross-section axes.
-            // If bone axis is Y, we scale X and Z.
-            
             bone.scale.x = vals.arms;
             bone.scale.z = vals.arms;
         }
         
         // Legs / Thighs (Optional, linked to weight)
-        if (name.includes('leg') || name.includes('thigh') || name.includes('calf')) {
+        if (name.includes('leg') || name.includes('thigh') || name.includes('calf') || name.includes('upleg')) {
             bone.scale.x = vals.weight;
             bone.scale.z = vals.weight;
         }
