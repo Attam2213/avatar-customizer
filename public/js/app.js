@@ -227,50 +227,70 @@ function updateBodyShape() {
     document.getElementById('val-waist').innerText = vals.waist.toFixed(2);
     document.getElementById('val-arms').innerText = vals.arms.toFixed(2);
 
-    // Apply Bone Scaling (Approximation)
+    // Apply Bone Scaling (Mixamo/Xbot standard rig)
     state.avatarModel.traverse((bone) => {
         if (!bone.isBone) return;
         
         const name = bone.name.toLowerCase();
 
         // Height (Global Scale on Hips or Root)
-        if (name === 'hips' || name === 'mixamorighips') {
+        if (name === 'hips' || name === 'mixamorig_hips' || name === 'mixamorighips') {
             let baseHeight = 170;
             if (state.gender === 'male') baseHeight = 180;
             if (state.gender === 'female') baseHeight = 165;
             
             const heightScale = vals.height / baseHeight; 
+            // Only apply uniform scale to the whole model container, not just hips bone
+            // because scaling hips bone affects all children bones recursively but positionally
+            // Better to scale the whole model group for height
             state.avatarModel.scale.setScalar(heightScale);
         }
 
-        // Weight (Width of body core)
-        if (name.includes('spine') || name.includes('hips')) {
-             // Scale X (width) and Z (depth)
+        // Weight / Build (Torso width/depth)
+        // Affects Spine, Spine1, Spine2
+        if (name.includes('spine') || name.includes('mixamorigspine')) {
              let weightMod = 1.0;
-             if (state.gender === 'male') weightMod = 1.05; // Broader
-             if (state.gender === 'female') weightMod = 0.95; // Narrower
+             // Scale X (width) and Z (depth)
+             // We use vals.weight which is a multiplier around 1.0 (e.g. 0.5 to 1.5)
+             
+             // Base adjustment
+             if (state.gender === 'male') weightMod = 1.0; 
+             if (state.gender === 'female') weightMod = 0.9; 
+             
+             // Apply scale
+             // Note: Bone scaling propagates to children. 
+             // We might need to inverse scale children if we don't want arms to get huge
+             // But for "Build" usually getting bigger everywhere is desired.
              
              bone.scale.x = vals.weight * weightMod; 
              bone.scale.z = vals.weight * weightMod;
         }
         
-        // Waist (Spine / Hips specific)
-        if (name === 'spine' || name === 'mixamorigspine') { // Lower spine usually
-             // Females usually have narrower waists relative to hips
-             let waistMod = 1.0;
-             if (state.gender === 'female') waistMod = 0.9;
-             
-            bone.scale.x = vals.waist * vals.weight * waistMod; 
-            bone.scale.z = vals.waist * vals.weight * waistMod;
+        // Waist (Spine / Hips specific) - usually Spine or Spine1
+        // To make waist smaller without affecting chest too much, we might need specific bone
+        if (name === 'mixamorigspine' || name === 'spine') { 
+            // This is the lower back.
+            bone.scale.x = vals.waist * vals.weight; // Waist is relative to weight
+            bone.scale.z = vals.waist * vals.weight;
         }
 
-        // Arms
-        if (name.includes('arm') || name.includes('shoulder')) {
-            let shoulderMod = 1.0;
-            if (state.gender === 'male') shoulderMod = 1.1; // Broad shoulders
+        // Arms / Shoulders
+        if (name.includes('arm') || name.includes('shoulder') || name.includes('forearm')) {
+            // vals.arms controls thickness (X/Z local scale of arm bones)
+            // Length is Y usually in Mixamo, but X in some rigs. Mixamo usually Y-up for bones.
+            // Actually Mixamo bones point in Y? Let's assume standard T-pose.
             
-            bone.scale.x = vals.arms * shoulderMod; 
-            bone.scale.z = vals.arms * shoulderMod; 
+            // For thickness we want to scale the cross-section axes.
+            // If bone axis is Y, we scale X and Z.
+            
+            bone.scale.x = vals.arms;
+            bone.scale.z = vals.arms;
+        }
+        
+        // Legs / Thighs (Optional, linked to weight)
+        if (name.includes('leg') || name.includes('thigh') || name.includes('calf')) {
+            bone.scale.x = vals.weight;
+            bone.scale.z = vals.weight;
         }
     });
 }
