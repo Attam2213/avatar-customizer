@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Digital Wardrobe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</head>
+<body>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen active">
+        <div class="logo-container">
+            <i class="fa-solid fa-shirt logo-icon"></i>
+            <h1>Wardrobe AI</h1>
+            <p>Your digital style assistant</p>
+        </div>
+        <div class="auth-buttons">
+            <button id="google-login-btn" class="google-btn">
+                <i class="fa-brands fa-google"></i> Continue with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Avatar Choice Screen -->
+    <div id="avatar-choice-screen" class="screen">
+        <div class="header-simple">
+            <h2>Create Avatar</h2>
+            <p>Choose how to create your digital twin</p>
+        </div>
+        <div class="choice-container">
+            <div class="choice-card" id="choice-scan">
+                <i class="fa-solid fa-camera"></i>
+                <h3>Scan Selfie</h3>
+                <p>Create from a photo</p>
+            </div>
+            <div class="choice-card" id="choice-manual">
+                <i class="fa-solid fa-sliders"></i>
+                <h3>Customize</h3>
+                <p>Set measurements manually</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gender Selection Screen -->
+    <div id="gender-screen" class="screen">
+        <div class="header-simple">
+            <h2>Choose Body Type</h2>
+            <p>Select your base model</p>
+        </div>
+        <div class="choice-container">
+            <div class="choice-card" id="gender-male">
+                <i class="fa-solid fa-person"></i>
+                <h3>Masculine</h3>
+                <p>Male base model</p>
+            </div>
+            <div class="choice-card" id="gender-female">
+                <i class="fa-solid fa-person-dress"></i>
+                <h3>Feminine</h3>
+                <p>Female base model</p>
+            </div>
+        </div>
+        <div class="action-footer">
+            <button id="gender-back-btn" class="secondary-btn">Back</button>
+        </div>
+    </div>
+
+    <!-- Manual Customization Screen -->
+    <div id="manual-screen" class="screen">
+        <div class="app-header">
+            <h3>Body Measurements</h3>
+            <button id="manual-done-btn" class="primary-btn-sm">Done</button>
+        </div>
+        
+        <div id="manual-preview-container"></div>
+
+        <div class="controls-drawer">
+            <div class="control-group">
+                <label>Height <span id="val-height">170 cm</span></label>
+                <input type="range" id="slider-height" min="150" max="210" value="170">
+            </div>
+            <div class="control-group">
+                <label>Weight / Build <span id="val-weight">Average</span></label>
+                <input type="range" id="slider-weight" min="0.8" max="1.5" step="0.05" value="1.0">
+            </div>
+            <div class="control-group">
+                <label>Waist Width <span id="val-waist">Average</span></label>
+                <input type="range" id="slider-waist" min="0.8" max="1.4" step="0.05" value="1.0">
+            </div>
+            <div class="control-group">
+                <label>Arm Thickness <span id="val-arms">Average</span></label>
+                <input type="range" id="slider-arms" min="0.8" max="1.5" step="0.05" value="1.0">
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="app-screen" class="screen">
+        <!-- Top Bar -->
+        <header class="app-header">
+            <div class="user-info">
+                <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User" id="user-avatar-img">
+                <span id="username-display">User</span>
+            </div>
+            <div class="header-actions">
+                <button id="logout-btn" class="icon-btn" title="Logout"><i class="fa-solid fa-sign-out-alt"></i></button>
+                <button id="scan-self-btn" class="icon-btn"><i class="fa-solid fa-camera-rotate"></i> Scan Self</button>
+            </div>
+        </header>
+
+        <!-- 3D Viewport -->
+        <div id="canvas-container"></div>
+
+        <!-- Inventory Drawer -->
+        <div id="inventory-drawer" class="drawer">
+            <div class="drawer-handle"></div>
+            <div class="drawer-header">
+                <h3>My Wardrobe</h3>
+                <button id="add-item-btn" class="primary-btn-sm"><i class="fa-solid fa-plus"></i> Scan Item</button>
+            </div>
+            <div class="inventory-grid" id="inventory-grid">
+                <!-- Items will be injected here -->
+                <div class="inventory-item placeholder">
+                    <i class="fa-solid fa-shirt"></i>
+                    <span>Add Clothes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Overlay for Scanning Clothes -->
+    <div id="camera-overlay" class="overlay">
+        <div class="camera-view">
+            <video id="camera-feed" autoplay playsinline></video>
+            <canvas id="camera-canvas" style="display:none;"></canvas>
+            <div class="camera-controls">
+                <button id="close-camera-btn" class="icon-btn-round secondary"><i class="fa-solid fa-times"></i></button>
+                <button id="capture-btn" class="capture-btn"></button>
+                <div class="spacer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ready Player Me Iframe Overlay -->
+    <div id="rpm-overlay" class="overlay hidden">
+        <div class="rpm-container">
+            <button id="close-rpm-btn" class="close-rpm"><i class="fa-solid fa-times"></i></button>
+            <iframe id="rpm-frame" allow="camera *; microphone *"></iframe>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

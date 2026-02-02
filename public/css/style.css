@@ -1,0 +1,419 @@
+:root {
+    --primary-color: #6c5ce7;
+    --secondary-color: #a29bfe;
+    --background-dark: #2d3436;
+    --surface-dark: #1e272e;
+    --text-light: #dfe6e9;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background-dark);
+    color: var(--text-light);
+    overflow: hidden; /* Prevent scroll */
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Screens */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* Auth Screen */
+#auth-screen {
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-icon {
+    font-size: 4rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.google-btn {
+    background: white;
+    color: #333;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.google-btn:active {
+    transform: scale(0.95);
+}
+
+/* Avatar Choice */
+.header-simple {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 30px;
+}
+
+.choice-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+}
+
+.choice-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.choice-card:active {
+    transform: scale(0.98);
+    background: rgba(255,255,255,0.15);
+}
+
+.choice-card i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+/* Manual Customization */
+#manual-screen {
+    display: none; /* Default hidden */
+    flex-direction: column;
+    height: 100%;
+}
+
+#manual-screen.active {
+    display: flex;
+}
+
+#manual-preview-container {
+    flex: 1;
+    background: #151515;
+    min-height: 0; /* Important for flex child scroll/sizing */
+    width: 100%;
+    position: relative;
+}
+
+.controls-drawer {
+    background: var(--surface-dark);
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: 40px;
+}
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #bbb;
+}
+
+.control-group input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    background: #444;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+}
+
+.control-group input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* App Header */
+.app-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100; /* Increased z-index */
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    pointer-events: none; /* Let clicks pass through empty areas */
+}
+
+.user-info, .header-actions {
+    pointer-events: auto; /* Re-enable clicks on content */
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#user-avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+}
+
+.icon-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    font-size: 0.9rem;
+}
+
+/* 3D Canvas */
+#canvas-container {
+    width: 100%;
+    height: 100%;
+    background: #111;
+}
+
+/* Inventory Drawer */
+.drawer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40%; /* Initial height */
+    background: var(--surface-dark);
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+}
+
+.drawer-handle {
+    width: 40px;
+    height: 5px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 5px;
+    margin: 0 auto 15px auto;
+}
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.primary-btn-sm {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 15px;
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+
+.inventory-item {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.inventory-item:active {
+    transform: scale(0.95);
+}
+
+.inventory-item.selected {
+    border-color: var(--primary-color);
+    background: rgba(108, 92, 231, 0.2);
+}
+
+.inventory-item img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
+/* Camera Overlay */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: 50;
+    display: none;
+}
+
+.overlay.active {
+    display: flex;
+}
+
+.camera-view {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+#camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.camera-controls {
+    position: absolute;
+    bottom: 40px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.capture-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: white;
+    border: 4px solid rgba(0,0,0,0.2);
+    cursor: pointer;
+}
+
+.icon-btn-round {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* Ready Player Me Overlay */
+#rpm-overlay.hidden {
+    display: none;
+}
+
+#rpm-overlay {
+    display: flex;
+    z-index: 100;
+}
+
+.rpm-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: white;
+}
+
+#rpm-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.close-rpm {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 101;
+    background: black;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Action Footer */
+.action-footer {
+    margin-top: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.secondary-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--text-light);
+    padding: 12px 30px;
+    border-radius: 24px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.secondary-btn:active {
+    background: rgba(255,255,255,0.1);
+}
