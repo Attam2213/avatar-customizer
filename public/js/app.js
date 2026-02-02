@@ -433,13 +433,6 @@ function applyBaseStyle(model) {
             // Check for hair, beard, glasses, etc.
             const name = (node.name || '').toLowerCase();
             
-            // Hide Alpha_Surface (Xbot outer shell) if we want "naked" robot
-            // or just treat it as clothing
-            if (name.includes('alpha_surface') || name.includes('joints')) {
-                node.visible = false;
-                return;
-            }
-
             // Hide Hair/Accessories AND Clothes if possible
             if (name.includes('hair') || 
                 name.includes('beard') || 
