@@ -2,7 +2,7 @@
 const state = {
     isAuthenticated: false,
     user: null,
-    avatarUrl: 'https://models.readyplayer.me/65a8dba831b23abb4f401bae.glb', // Default avatar
+    avatarUrl: 'models/male_base.glb', // Default to local male base
     gender: 'neutral', // 'male', 'female', 'neutral'
     inventory: [],
     scene: null,
@@ -14,8 +14,33 @@ const state = {
 
 // Base Models (Mannequins)
 const baseModels = {
-    male: '/models/male_base.glb',
-    female: '/models/female_base.glb'
+    male: 'models/male_base.glb',
+    female: 'models/female_base.glb'
+};
+
+// === DEBUGGER ===
+// Catch errors and show them on screen
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    let debugDiv = document.getElementById('debug-console');
+    if (!debugDiv) {
+        debugDiv = document.createElement('div');
+        debugDiv.id = 'debug-console';
+        debugDiv.style.position = 'fixed';
+        debugDiv.style.top = '0';
+        debugDiv.style.left = '0';
+        debugDiv.style.width = '100%';
+        debugDiv.style.backgroundColor = 'rgba(255,0,0,0.8)';
+        debugDiv.style.color = 'white';
+        debugDiv.style.zIndex = '9999';
+        debugDiv.style.padding = '10px';
+        debugDiv.style.fontFamily = 'monospace';
+        debugDiv.style.fontSize = '12px';
+        debugDiv.style.maxHeight = '100px';
+        debugDiv.style.overflowY = 'scroll';
+        document.body.appendChild(debugDiv);
+    }
+    debugDiv.innerHTML += `<div>Error: ${msg} (Line: ${lineNo})</div>`;
+    return false;
 };
 
 // Elements
@@ -348,16 +373,24 @@ function loadAvatar(url) {
         state.avatarModel = null;
     }
     
+    // Normalize URL
+    if (!url) url = 'models/male_base.glb';
+    if (url.startsWith('/')) url = url.substring(1); // Remove leading slash if present
+
+    console.log('Loading avatar from:', url);
+
     const loader = new THREE.GLTFLoader();
     try {
         loader.setCrossOrigin('anonymous');
     } catch (e) {
-        // Ignore if method doesn't exist
+        // Ignore
     }
 
     loader.load(url, (gltf) => {
         console.log('Avatar loaded successfully');
         const model = gltf.scene;
+        state.avatarModel = model;
+        state.scene.add(model);
         
         // Auto-scale and center
         const box = new THREE.Box3().setFromObject(model);
@@ -368,111 +401,76 @@ function loadAvatar(url) {
         console.log('Model center:', center);
 
         // Normalize height to ~1.7m
-        const maxDim = Math.max(size.y, 1.7); // Avoid scaling up too much if it's already big
         if (size.y > 0) {
             const scale = 1.7 / size.y;
             model.scale.setScalar(scale);
             console.log('Scaling model by:', scale);
         }
 
-        // Center model
-        model.position.x = -center.x * model.scale.x;
-        model.position.y = -box.min.y * model.scale.y; // Put feet on ground
-        model.position.z = -center.z * model.scale.z;
-
-        state.avatarModel = model;
-        state.scene.add(model);
+        // Re-center after scaling
+        const box2 = new THREE.Box3().setFromObject(model);
+        const center2 = box2.getCenter(new THREE.Vector3());
         
+        model.position.x += (model.position.x - center2.x);
+        model.position.y += -box2.min.y; // Feet on ground
+        model.position.z += (model.position.z - center2.z);
+
+        // FORCE CLAY MODE (Grey Mannequin)
+        // This solves "clothing" and "robot" issues by making everything a uniform sculpture
+        applyBaseStyle(model);
+
         // Debug bones
         state.avatarModel.traverse((o) => {
             if (o.isMesh) console.log('Mesh found:', o.name);
             if (o.isBone) console.log('Bone found:', o.name);
         });
 
-        // Apply Gender-Specific Base Style (Grey + No Hair)
-        // Only apply if it's NOT the base Xbot/Ybot which are already "clean" mannequins
-        // But we still want them grey.
-        if (state.gender && state.gender !== 'neutral') {
-             // For these new human models, they might have textures/clothes.
-             // Let's force them to be grey mannequins.
-             applyBaseStyle(state.avatarModel);
-        }
-    }, undefined, (error) => {
+    }, (xhr) => {
+        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    }, (error) => {
         console.error('An error happened loading the avatar:', error);
-        console.error('Error details:', error.message, error.stack);
         
-        // Fallback: Add a red box so we know the scene is working
+        // On-screen error
+        let debugDiv = document.getElementById('debug-console');
+        if (debugDiv) debugDiv.innerHTML += `<div>Load Error: ${error.message}</div>`;
+        
+        // Fallback: Add a red box
         const geometry = new THREE.BoxGeometry(0.5, 1.7, 0.3);
         const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
         const box = new THREE.Mesh(geometry, material);
         box.position.set(0, 0.85, 0);
         state.scene.add(box);
         state.avatarModel = box;
-        alert('Failed to load avatar. Using placeholder. Check console for details.');
+        alert('Не удалось загрузить модель. Проверьте консоль.');
     });
 }
 
 function applyBaseStyle(model) {
     if (!model) return;
     
-    console.log('Applying base style (Grey + No Hair)...');
+    console.log('Applying CLAY MODE (Grey + Visible)...');
 
-    // Remove any virtual try-on items
-    const tryOnItem = state.scene.getObjectByName('virtual-try-on');
-    if (tryOnItem) state.scene.remove(tryOnItem);
-    
-    // Grey Material
-    const greyMaterial = new THREE.MeshStandardMaterial({
-        color: 0x888888,
-        roughness: 0.7,
-        metalness: 0.1
+    // Grey Clay Material
+    const clayMaterial = new THREE.MeshStandardMaterial({
+        color: 0x999999, // Neutral Grey
+        roughness: 0.6,
+        metalness: 0.1,
+        skinning: true // Critical for animations
     });
 
     model.traverse((node) => {
         if (node.isMesh) {
-            // Check for hair, beard, glasses, etc.
-            const name = (node.name || '').toLowerCase();
+            // Make EVERYTHING visible
+            node.visible = true;
             
-            // Hide Hair/Accessories AND Clothes if possible
-            if (name.includes('hair') || 
-                name.includes('beard') || 
-                name.includes('glass') || 
-                name.includes('hat') || 
-                name.includes('facewear') ||
-                name.includes('headwear') ||
-                name.includes('mask') ||
-                name.includes('helmet') ||
-                name.includes('vest')) {
-                node.visible = false;
-                return;
-            }
-
-            // Try to identify outfit meshes
-            // Standard RPM naming: Wolf3D_Outfit_Top, Wolf3D_Outfit_Bottom, Wolf3D_Outfit_Footwear
-            // If we hide them, we might get gaps. Safe bet: Apply Grey.
+            // Apply Clay Material
+            // We do NOT hide anything. We paint it grey.
+            // This turns "clothes" into "sculpted details" on the mannequin.
+            node.material = clayMaterial;
             
-            if (name.includes('outfit') || name.includes('top') || name.includes('bottom') || name.includes('footwear') || name.includes('shoe') || name.includes('shirt') || name.includes('pants') || name.includes('trousers') || name.includes('jacket') || name.includes('coat') || name.includes('hoodie') || name.includes('dress') || name.includes('skirt')) {
-                console.log('Hiding clothing mesh:', name);
-                node.visible = false;
-                return;
-            }
-
-            // For Body, make it grey
-            const newMat = greyMaterial.clone();
-            if (node.isSkinnedMesh) {
-                // Ensure skinning is preserved/enabled if needed
-                newMat.skinning = true; 
-            }
-            node.material = newMat;
-            
-            // Keep eyes/teeth separate
-            if (name.includes('eye') || name.includes('teeth')) {
-                 if (name.includes('eye')) {
-                     node.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
-                 } else if (name.includes('teeth')) {
-                     node.material = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
-                 }
-            }
+            // Enable shadows
+            node.castShadow = true;
+            node.receiveShadow = true;
         }
     });
 }
