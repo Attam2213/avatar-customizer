@@ -15,7 +15,9 @@ const state = {
 // Base Models (Mannequins)
 const baseModels = {
     male: 'models/male_base.glb',
-    female: 'models/female_base.glb'
+    // Use Xbot as female base because it has no clothes and is a "base" mesh
+    // Clay Mode will make it look like a grey mannequin
+    female: 'models/Xbot.glb' 
 };
 
 // === DEBUGGER ===
